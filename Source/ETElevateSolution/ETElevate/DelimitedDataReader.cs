@@ -9,6 +9,7 @@ namespace ETElevate
     {
         private readonly char delimiter;
         private readonly Stream stream;
+        
 
         private enum ReadState
         {   
@@ -24,10 +25,25 @@ namespace ETElevate
             this.stream = stream;
         }
 
+        public bool EndOfStream { get; private set; }
+
         public void Dispose()
         {
         }
 
+        public IList<IList<string>> ReadAllLines()
+        {
+            var lines = new List<IList<string>>();
+
+            while (!EndOfStream)
+            {
+                lines.Add(ReadLine());
+            }
+
+            return lines;
+        }
+
+        
         public IList<string> ReadLine()
         {
             var fields = new List<string>();
@@ -38,9 +54,11 @@ namespace ETElevate
             while (readState != ReadState.LineDone)
             {
                 var value = stream.ReadByte();
-
+                
                 if (value == -1)
                 {
+                    EndOfStream = true;
+
                     fields.Add(currentField.ToString());
                     readState = ReadState.LineDone;
                 }
@@ -55,6 +73,11 @@ namespace ETElevate
                         else if (value == '\r' || value == '\n')
                         {
                             readState = ReadState.LineDone;
+                        }
+                        else if (value == delimiter)
+                        {
+                            fields.Add(string.Empty);
+                            readState = ReadState.StartField;
                         }
                         else
                         {
@@ -78,7 +101,7 @@ namespace ETElevate
                         {
                             fields.Add(currentField.ToString());
                             currentField.Clear();
-                            readState = ReadState.StartField;
+                            readState = ReadState.LineDone;
                         }
                         else
                         {

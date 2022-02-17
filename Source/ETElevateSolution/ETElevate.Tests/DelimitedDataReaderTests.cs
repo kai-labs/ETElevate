@@ -32,5 +32,59 @@ namespace ETElevate.Tests
                 }
             }
         }
+                
+        [Test]
+        public void CanReadCsvMultiLines()
+        {
+            using (var memoryStream = new MemoryStream(Encoding.ASCII.GetBytes("One,Two,Three\r\nFour,Five,Six")))
+            {
+                using (var reader = new DelimitedDataReader(',', memoryStream))
+                {
+                    var lines = reader.ReadAllLines();
+                    Assert.AreEqual("One", lines[0][0]);
+                    Assert.AreEqual("Two", lines[0][1]);
+                    Assert.AreEqual("Three", lines[0][2]);
+                    Assert.AreEqual("Four", lines[1][0]);
+                    Assert.AreEqual("Five", lines[1][1]);
+                    Assert.AreEqual("Six", lines[1][2]);
+                }
+            }            
+        }
+
+        [Test]
+        public void CanReadCsvMultiLinesWithNestedCRLF()
+        {
+            using (var memoryStream = new MemoryStream(Encoding.ASCII.GetBytes("One,\"\r\nTwo\",Three\r\nFour,Five,Six")))
+            {
+                using (var reader = new DelimitedDataReader(',', memoryStream))
+                {
+                    var lines = reader.ReadAllLines();
+                    Assert.AreEqual("One", lines[0][0]);
+                    Assert.AreEqual("\r\nTwo", lines[0][1]);
+                    Assert.AreEqual("Three", lines[0][2]);
+                    Assert.AreEqual("Four", lines[1][0]);
+                    Assert.AreEqual("Five", lines[1][1]);
+                    Assert.AreEqual("Six", lines[1][2]);
+                }
+            }
+        }
+
+        [Test]
+        public void CanReadCsvSingleLineWithEmptyFields()
+        {
+            using (var memoryStream = new MemoryStream(Encoding.ASCII.GetBytes("One,,Three\r\n\"\",Five,Six")))
+            {
+                using (var reader = new DelimitedDataReader(',', memoryStream))
+                {
+                    var lines = reader.ReadAllLines();
+                    Assert.AreEqual("One", lines[0][0]);
+                    Assert.AreEqual(string.Empty, lines[0][1]);
+                    Assert.AreEqual("Three", lines[0][2]);
+                    Assert.AreEqual(string.Empty, lines[1][0]);
+                    Assert.AreEqual("Five", lines[1][1]);
+                    Assert.AreEqual("Six", lines[1][2]);
+                }
+            }
+        }
     }
 }
